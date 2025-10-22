@@ -302,8 +302,24 @@ class LiveScreensaverService : DreamService(), SurfaceHolder.Callback {
             private const val EXTRACTION_TIMEOUT_MS = 15000L
             private val EXPIRATION_PATTERN = Pattern.compile("expire/(\\d+)")
 
-            init {
-                NewPipe.init(DownloaderImpl())
+            @Volatile
+            private var initialized = false
+
+            private fun ensureInitialized() {
+                if (!initialized) {
+                    synchronized(this) {
+                        if (!initialized) {
+                            try {
+                                NewPipe.init(DownloaderImpl())
+                                initialized = true
+                                Log.d(TAG, "NewPipe initialized successfully")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to initialize NewPipe", e)
+                                throw e
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -324,6 +340,8 @@ class LiveScreensaverService : DreamService(), SurfaceHolder.Callback {
                 if (!needsExtraction(sourceUrl)) {
                     return@withContext sourceUrl
                 }
+
+                ensureInitialized()
 
                 if (!forceRefresh) {
                     getCachedUrl(sourceUrl, cacheExpirationSeconds)?.let { cached ->
