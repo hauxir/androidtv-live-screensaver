@@ -1,13 +1,13 @@
 .PHONY: build clean install uninstall
 
 build:
-	./gradlew assembleRelease
+	./gradlew assembleDebug
 
 clean:
 	./gradlew clean
 
 install: build
-	adb install -r app/build/outputs/apk/release/app-release.apk
+	adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 uninstall:
 	adb uninstall com.livescreensaver.tv
