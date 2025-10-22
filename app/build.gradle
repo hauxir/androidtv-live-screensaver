@@ -1,0 +1,52 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+android {
+    namespace 'com.livescreensaver.tv'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.livescreensaver.tv"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.leanback:leanback:1.2.0-alpha04'
+    implementation 'androidx.leanback:leanback-preference:1.2.0-alpha04'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'androidx.media3:media3-exoplayer:1.5.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.5.0'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.24.8'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
