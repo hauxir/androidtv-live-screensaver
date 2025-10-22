@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.StrictMode
 import androidx.preference.PreferenceManager
 import android.service.dreams.DreamService
 import android.util.Log
@@ -65,6 +66,23 @@ class LiveScreensaverService : DreamService(), SurfaceHolder.Callback {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .penaltyFlashScreen()
+                    .build()
+            )
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build()
+            )
+            Log.d(TAG, "StrictMode enabled for debug build")
+        }
 
         isInteractive = false
         isFullscreen = true
