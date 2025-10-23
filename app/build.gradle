@@ -32,6 +32,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -44,6 +45,7 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.4'
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.leanback:leanback:1.2.0-alpha04'
     implementation 'androidx.leanback:leanback-preference:1.2.0-alpha04'
