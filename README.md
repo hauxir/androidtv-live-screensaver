@@ -2,6 +2,8 @@
 
 An Android TV screensaver that plays live video streams. Supports YouTube videos and direct HLS streams.
 
+> **Also available:** [macOS Live Screensaver](https://github.com/hauxir/macos-live-screensaver)
+
 ## Why?
    
 Turn any live stream into your screensaver. Some examples:
