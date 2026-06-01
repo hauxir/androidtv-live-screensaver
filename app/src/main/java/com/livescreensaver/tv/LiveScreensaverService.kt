@@ -399,35 +399,59 @@ class LiveScreensaverService : DreamService(), SurfaceHolder.Callback {
 
         private suspend fun extractFromYouTube(url: String): String? = withContext(Dispatchers.IO) {
             try {
-                val streamInfo = StreamInfo.getInfo(url)
+                val service = ServiceList.YouTube
+                val linkHandler = service.streamLHFactory.fromUrl(url)
+                val extractor = service.getStreamExtractor(linkHandler)
+                Log.d(TAG, "Fetching extractor page for $url")
+                extractor.fetchPage()
+                Log.d(TAG, "Page fetched, isLive=${runCatching { extractor.streamType?.toString() }.getOrElse { it.message }}")
 
-                streamInfo.hlsUrl?.let { hlsUrl ->
-                    Log.d(TAG, "Found HLS URL: $hlsUrl")
-                    return@withContext hlsUrl
-                }
-
-                val videoStreams = streamInfo.videoStreams
-                if (videoStreams.isNotEmpty()) {
-                    val bestStream = videoStreams.maxByOrNull { it.bitrate ?: 0 }
-                    bestStream?.url?.let { streamUrl ->
-                        Log.d(TAG, "Found video stream URL: $streamUrl")
-                        return@withContext streamUrl
+                runCatching { extractor.hlsUrl }
+                    .onSuccess { hlsUrl ->
+                        if (!hlsUrl.isNullOrBlank()) {
+                            Log.d(TAG, "Found HLS URL: $hlsUrl")
+                            return@withContext hlsUrl
+                        } else {
+                            Log.d(TAG, "extractor.hlsUrl returned null/blank")
+                        }
                     }
-                }
+                    .onFailure { Log.e(TAG, "extractor.hlsUrl failed: ${it.javaClass.simpleName}: ${it.message}", it) }
 
-                val videoOnlyStreams = streamInfo.videoOnlyStreams
-                if (videoOnlyStreams.isNotEmpty()) {
-                    val bestStream = videoOnlyStreams.maxByOrNull { it.bitrate ?: 0 }
-                    bestStream?.url?.let { streamUrl ->
-                        Log.d(TAG, "Found video-only stream URL: $streamUrl")
-                        return@withContext streamUrl
+                runCatching { extractor.videoStreams }
+                    .onSuccess { videoStreams ->
+                        Log.d(TAG, "videoStreams count=${videoStreams?.size}")
+                        videoStreams?.maxByOrNull { it.bitrate ?: 0 }?.url?.let { streamUrl ->
+                            Log.d(TAG, "Found video stream URL: $streamUrl")
+                            return@withContext streamUrl
+                        }
                     }
-                }
+                    .onFailure { Log.e(TAG, "extractor.videoStreams failed: ${it.javaClass.simpleName}: ${it.message}", it) }
+
+                runCatching { extractor.videoOnlyStreams }
+                    .onSuccess { videoOnlyStreams ->
+                        Log.d(TAG, "videoOnlyStreams count=${videoOnlyStreams?.size}")
+                        videoOnlyStreams?.maxByOrNull { it.bitrate ?: 0 }?.url?.let { streamUrl ->
+                            Log.d(TAG, "Found video-only stream URL: $streamUrl")
+                            return@withContext streamUrl
+                        }
+                    }
+                    .onFailure { Log.e(TAG, "extractor.videoOnlyStreams failed: ${it.javaClass.simpleName}: ${it.message}", it) }
+
+                runCatching { extractor.dashMpdUrl }
+                    .onSuccess { Log.d(TAG, "dashMpdUrl=${it ?: "<null>"}") }
+                    .onFailure { Log.e(TAG, "extractor.dashMpdUrl failed: ${it.javaClass.simpleName}: ${it.message}", it) }
 
                 Log.w(TAG, "No suitable stream found for $url")
                 null
             } catch (e: Exception) {
-                Log.e(TAG, "Error extracting from YouTube", e)
+                Log.e(TAG, "Error extracting from YouTube: ${e.javaClass.simpleName}: ${e.message}", e)
+                var cause: Throwable? = e.cause
+                var depth = 1
+                while (cause != null && depth < 10) {
+                    Log.e(TAG, "  cause[$depth]: ${cause.javaClass.simpleName}: ${cause.message}", cause)
+                    cause = cause.cause
+                    depth++
+                }
                 null
             }
         }
