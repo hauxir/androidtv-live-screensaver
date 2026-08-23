@@ -16,7 +16,8 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="Live Screensaver"
-        android:theme="@style/Theme.Leanback">
+        android:theme="@style/Theme.Leanback"
+        android:usesCleartextTraffic="true">
 
         <service
             android:name=".LiveScreensaverService"
