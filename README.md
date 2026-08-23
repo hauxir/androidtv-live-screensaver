@@ -61,3 +61,48 @@ make clean  # Remove build directory
 - Check that the stream is publicly accessible
 
 **Black screen**: Wait a few seconds for loading, or try a different URL
+
+### Google TV: app doesn't appear as a screensaver option
+
+On devices running **Google TV** (as opposed to the older "Android TV" UI) — e.g. Chromecast with Google TV, and newer Sony Bravia sets — **Settings → Device Preferences → Screen saver** only lists a curated set of screensavers (Google's own + whatever the OEM has pre-approved). Sideloaded apps that implement a `DreamService`, including this one, generally don't show up there, even though the app and the underlying Android daydream mechanism both work correctly.
+
+The workaround is to select and enable the screensaver directly via `adb`, bypassing the picker UI entirely:
+
+```bash
+adb shell settings put secure screensaver_enabled 1
+adb shell settings put secure screensaver_components com.livescreensaver.tv/.LiveScreensaverService
+adb shell settings put secure screensaver_activate_on_sleep 1
+```
+
+Verify it took:
+```bash
+adb shell settings get secure screensaver_components
+# should print: com.livescreensaver.tv/.LiveScreensaverService
+```
+
+To control how long the TV must be idle before the screensaver activates (this is a system-wide setting, independent of the app):
+```bash
+adb shell settings put system screen_off_timeout 60000   # 1 minute, in ms
+```
+
+**Note**: Since these are set outside the Settings UI, a factory reset or major system update may silently revert them (Sony's Settings app has no notion that a sideloaded screensaver is "selected"). If the screensaver stops appearing after such an event, just re-run the commands above.
+
+#### Enabling ADB on the TV
+
+If you don't already have `adb` access to the TV:
+
+1. Enable Developer Options: **Settings → About → (click the build number ~7 times)**.
+2. In Developer Options, enable **USB debugging**.
+3. Try **Network debugging** too — on some Google TV builds this toggle is flaky and does nothing visible even after a reboot.
+
+If network debugging won't cooperate, most Android TV/Google TV devices only support **USB debugging in device mode** through a specific port (often labeled "Service" on the back, distinct from any USB-A ports meant for flash drives/keyboards, which are host-only and won't work here). If your set doesn't have a compatible port, the reliable fallback is:
+
+1. Connect the TV to a computer via USB (a working device-mode port), and accept the debugging authorization prompt that appears on the TV.
+2. From that computer, run `adb devices` to confirm it's detected, then:
+   ```bash
+   adb tcpip 5555
+   ```
+3. Disconnect the USB cable and connect over the network instead, from any machine on the same LAN:
+   ```bash
+   adb connect <tv-ip>:5555
+   ```
